@@ -15,6 +15,8 @@ import {
   Zap,
   Megaphone,
 } from 'lucide-react'
+import { LiveStadiumMap } from '../components/LiveStadiumMap'
+import { DashboardCharts } from '../components/DashboardCharts'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { api, auth, type AuditLogEntry, type EfficiencyMetrics } from '../services/api'
 import type { OpsAction, Zone, SustainabilityData } from '../types'
@@ -185,24 +187,15 @@ export function OpsDashboard() {
                   <ShieldCheck size={16} /> Auto-alerting
                 </span>
               </div>
-              <div className="stadium-map" role="img" aria-label="Stadium zone density map">
+              <div className="stadium-map-container" role="img" aria-label="Stadium zone density map">
                 {zones.length === 0 && (
                   <p className="muted center">Loading live zone data...</p>
                 )}
-                {zones.map((z, i) => (
-                  <button
-                    key={z.name}
-                    className={`zone zone-${(i % 6) + 1} ${getDensityClass(z.density)}`}
-                    aria-label={`${z.name} density ${Math.round(z.density * 100)} percent`}
-                  >
-                    <strong>{z.name.replace('_', ' ')}</strong>
-                    <span>{z.label || 'Zone'}</span>
-                    <b>{Math.round(z.density * 100)}%</b>
-                  </button>
-                ))}
-                <div className="pitch">MATCH BOWL</div>
+                {zones.length > 0 && <LiveStadiumMap zones={zones} />}
               </div>
             </section>
+
+            <DashboardCharts zones={zones} />
 
             <section className="panel" aria-labelledby="actions-title">
               <div className="panel-head">
