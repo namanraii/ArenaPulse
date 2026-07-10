@@ -187,15 +187,24 @@ export function OpsDashboard() {
                   <ShieldCheck size={16} /> Auto-alerting
                 </span>
               </div>
-              <div className="stadium-map-container" role="img" aria-label="Stadium zone density map">
+              <div className="stadium-map" role="img" aria-label="Stadium zone density map">
                 {zones.length === 0 && (
                   <p className="muted center">Loading live zone data...</p>
                 )}
-                {zones.length > 0 && <LiveStadiumMap zones={zones} />}
+                {zones.map((z, i) => (
+                  <button
+                    key={z.name}
+                    className={`zone zone-${(i % 6) + 1} ${getDensityClass(z.density)}`}
+                    aria-label={`${z.name} density ${Math.round(z.density * 100)} percent`}
+                  >
+                    <strong>{z.name.replace('_', ' ')}</strong>
+                    <span>{z.label || 'Zone'}</span>
+                    <b>{Math.round(z.density * 100)}%</b>
+                  </button>
+                ))}
+                <div className="pitch">MATCH BOWL</div>
               </div>
             </section>
-
-            <DashboardCharts zones={zones} />
 
             <section className="panel" aria-labelledby="actions-title">
               <div className="panel-head">
@@ -227,6 +236,25 @@ export function OpsDashboard() {
                 {sorted.length === 0 && <p className="muted">No pending actions.</p>}
               </div>
             </section>
+
+            <section className="panel heatmap-panel" aria-labelledby="live-map-title" style={{ gridColumn: '1 / -1' }}>
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Geographic Data</p>
+                  <h2 id="live-map-title">Live Geographic Map</h2>
+                </div>
+              </div>
+              <div className="stadium-map-container" role="img" aria-label="Geographic zone density map" style={{ padding: '1rem' }}>
+                {zones.length === 0 && (
+                  <p className="muted center">Loading live zone data...</p>
+                )}
+                {zones.length > 0 && <LiveStadiumMap zones={zones} />}
+              </div>
+            </section>
+
+            <div style={{ gridColumn: '1 / -1' }}>
+              <DashboardCharts zones={zones} />
+            </div>
           </>
         )}
 
