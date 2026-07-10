@@ -133,7 +133,7 @@ app.include_router(ops.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")
 
 
-@app.get("/api/v1/healthz")
+@app.api_route("/api/v1/healthz", methods=["GET", "HEAD"])
 async def healthz() -> dict:
     """Return health status of the API and its dependent agents.
 
