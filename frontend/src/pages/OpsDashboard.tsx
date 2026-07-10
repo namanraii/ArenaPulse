@@ -259,7 +259,7 @@ export function OpsDashboard() {
         )}
 
         {tab === 'actions' && (
-          <section className="panel" aria-labelledby="all-actions-title">
+          <section className="panel" aria-labelledby="all-actions-title" style={{ gridColumn: '1 / -1' }}>
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Human-in-the-loop</p>
@@ -308,7 +308,7 @@ export function OpsDashboard() {
         )}
 
         {tab === 'sustainability' && sustain && (
-          <section className="panel" aria-labelledby="sustain-title">
+          <section className="panel" aria-labelledby="sustain-title" style={{ gridColumn: '1 / -1' }}>
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Green Operations</p>
@@ -351,7 +351,7 @@ export function OpsDashboard() {
         )}
 
         {tab === 'efficiency' && efficiency && (
-          <section className="panel" aria-labelledby="eff-title">
+          <section className="panel" aria-labelledby="eff-title" style={{ gridColumn: '1 / -1' }}>
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Responsible AI</p>
@@ -388,7 +388,7 @@ export function OpsDashboard() {
         )}
 
         {tab === 'audit' && (
-          <section className="panel" aria-labelledby="audit-title">
+          <section className="panel" aria-labelledby="audit-title" style={{ gridColumn: '1 / -1' }}>
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Accountability</p>
