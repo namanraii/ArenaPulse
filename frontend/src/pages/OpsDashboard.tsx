@@ -194,7 +194,7 @@ export function OpsDashboard() {
                 {zones.map((z, i) => (
                   <button
                     key={z.name}
-                    className={`zone zone-${(i % 6) + 1} ${getDensityClass(z.density)}`}
+                    className={`zone zone-${i + 1} ${getDensityClass(z.density)}`}
                     aria-label={`${z.name} density ${Math.round(z.density * 100)} percent`}
                   >
                     <strong>{z.name.replace('_', ' ')}</strong>
