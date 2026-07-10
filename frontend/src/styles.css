@@ -115,7 +115,7 @@ input:focus-visible {
 .ops-app {
   min-height: 100vh;
   padding: 16px;
-  max-width: 1500px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -170,7 +170,7 @@ input:focus-visible {
 .ops-main {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
 }
 
 /* ===== Panel ===== */
