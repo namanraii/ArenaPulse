@@ -8,7 +8,11 @@ interface WsState {
   error: string | null
 }
 
-export function useWebSocket(url: string = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:8000/api/v1/ws/crowd-feed`) {
+const defaultWsUrl = import.meta.env.VITE_WS_URL 
+  ? `${import.meta.env.VITE_WS_URL}/api/v1/ws/crowd-feed`
+  : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:8000/api/v1/ws/crowd-feed`;
+
+export function useWebSocket(url: string = defaultWsUrl) {
   const [state, setState] = useState<WsState>({ zones: [], isConnected: false, error: null })
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
