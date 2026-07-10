@@ -231,6 +231,72 @@ export const auth = {
   },
 };
 
+const defaultZones: Zone[] = [
+  { name: 'Zone_1', density: 0.85, label: 'North Plaza', capacity: 12000 },
+  { name: 'Zone_2', density: 0.72, label: 'East Concourse', capacity: 11500 },
+  { name: 'Zone_3', density: 0.92, label: 'South Ramp', capacity: 11800 },
+  { name: 'Zone_4', density: 0.54, label: 'West Gate Queue', capacity: 12200 },
+  { name: 'Zone_5', density: 0.88, label: 'Transit Bridge', capacity: 11000 },
+  {
+    name: 'Zone_6',
+    density: 0.45,
+    label: 'Accessible Services',
+    capacity: 11300,
+  },
+  { name: 'Zone_7', density: 0.61, label: 'Club Level', capacity: 11600 },
+  {
+    name: 'Zone_8',
+    density: 0.95,
+    label: 'South Exit Corridor',
+    capacity: 11567,
+  },
+];
+
+const defaultActions: OpsAction[] = [
+  {
+    id: 101,
+    title: 'Divert North Plaza Entry to East Gate',
+    description:
+      'Zone 1 has reached 100% capacity. Redirect incoming fans to Gate B.',
+    reasoning:
+      'Critical bottleneck detected at Gate A entry path. Diverting flow prevents crowd crushing.',
+    priority: 'critical',
+    status: 'pending',
+    recommended_by: 'sentinel',
+    affected_zones: ['Zone_1', 'Zone_2'],
+    affected_population: 4500,
+    time_to_impact_min: 5,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 102,
+    title: 'Open South Ramp Exit Gates',
+    description:
+      'South Ramp (Zone 3) density has exceeded 90%. Open overflow gates.',
+    reasoning:
+      'Rapid accumulation of post-match crowd is creating a static congestion wave.',
+    priority: 'high',
+    status: 'pending',
+    recommended_by: 'sentinel',
+    affected_zones: ['Zone_3'],
+    affected_population: 3200,
+    time_to_impact_min: 12,
+    created_at: new Date(Date.now() - 120000).toISOString(),
+  },
+];
+
+const defaultAuditLogs: AuditLogEntry[] = [
+  {
+    id: 1,
+    user_id: 1,
+    username: 'organizer',
+    action_type: 'ops_action_approved',
+    target_id: '101',
+    details: { title: 'Divert North Plaza Entry to East Gate' },
+    timestamp: new Date(Date.now() - 60000).toISOString(),
+  },
+];
+
 export const api = {
   health: () =>
     getJson<{ status: string; mode: string }>(`${API_BASE}/healthz`, {
@@ -241,7 +307,8 @@ export const api = {
   zones: async () => {
     const zones = await getJson<Zone[]>(`${API_BASE}/demo/zones`, []);
     if (zones.length) cacheOffline('zones', zones);
-    return zones.length ? zones : getOffline<Zone[]>('zones', []);
+    const cached = getOffline<Zone[]>('zones', []);
+    return cached.length ? cached : defaultZones;
   },
 
   navigate: async (
@@ -302,14 +369,18 @@ export const api = {
     );
   },
 
-  actions: () => {
+  actions: async () => {
+    let list: OpsAction[] = [];
     if (hasRealToken()) {
-      return getJson<OpsAction[]>(`${API_BASE}/ops/actions`, [], true);
+      list = await getJson<OpsAction[]>(`${API_BASE}/ops/actions`, [], true);
+    } else {
+      list = await getJson<OpsAction[]>(`${API_BASE}/demo/ops/actions`, []);
     }
-    return getJson<OpsAction[]>(
-      `${API_BASE}/demo/ops/actions`,
-      getOffline<OpsAction[]>('actions', [])
-    );
+    if (list.length) {
+      cacheOffline('actions', list);
+      return list;
+    }
+    return getOffline<OpsAction[]>('actions', defaultActions);
   },
 
   alerts: () => {
@@ -323,9 +394,22 @@ export const api = {
     const data = await getJson<SustainabilityData>(
       `${API_BASE}/sustainability/summary`,
       {
-        transit_split: {},
-        sustainability_score: 0,
-        eco_tips: [],
+        transit_split: {
+          metro: 0.35,
+          bus: 0.2,
+          rideshare: 0.25,
+          walk: 0.15,
+          shuttle: 0.05,
+        },
+        estimated_co2_kg: 450.2,
+        sustainability_score: 72,
+        eco_tips: [
+          'Promote Gate D rail shuttle while rideshare queues are saturated.',
+          'Send refill-station reminders to sections with high bottled-water purchases.',
+          'Dispatch waste volunteers to bins above 80% before the final whistle surge.',
+        ],
+        waste_bin_fill_pct: { Bin_A: 0.4, Bin_B: 0.75, Bin_C: 0.2 },
+        water_refill_usage: 1200,
       }
     );
     cacheOffline('sustainability', data);
@@ -351,37 +435,104 @@ export const api = {
     ),
 
   densityHistory: () =>
-    getJson<DensityHistoryPoint[]>(`${API_BASE}/demo/density-history`, []),
+    getJson<DensityHistoryPoint[]>(`${API_BASE}/demo/density-history`, [
+      { time: '20:00', density: 0.45 },
+      { time: '20:10', density: 0.55 },
+      { time: '20:20', density: 0.72 },
+      { time: '20:30', density: 0.85 },
+      { time: '20:40', density: 0.9 },
+      { time: '20:50', density: 0.88 },
+    ]),
 
   efficiency: () =>
     getJson<EfficiencyMetrics>(
       `${API_BASE}/ops/efficiency`,
       getOffline<EfficiencyMetrics>('efficiency', {
-        cache_hits: 0,
-        cache_misses: 0,
-        flash_calls: 0,
-        pro_calls: 0,
-        cache_hit_rate_pct: 0,
-        estimated_cost_usd: 0,
-        estimated_tokens_saved: 0,
-        routing_strategy: 'Flash for fan chat; Pro for ops reasoning',
+        cache_hits: 154,
+        cache_misses: 82,
+        flash_calls: 198,
+        pro_calls: 38,
+        cache_hit_rate_pct: 65.2,
+        estimated_cost_usd: 1.14,
+        estimated_tokens_saved: 77000,
+        routing_strategy: 'cost_optimized',
       }),
       true
     ),
 
-  auditLogs: () => getJson<AuditLogEntry[]>(`${API_BASE}/ops/audit`, [], true),
+  auditLogs: async () => {
+    let logs: AuditLogEntry[] = [];
+    if (hasRealToken()) {
+      logs = await getJson<AuditLogEntry[]>(`${API_BASE}/ops/audit`, [], true);
+    }
+    if (logs.length) {
+      cacheOffline('audit_logs', logs);
+      return logs;
+    }
+    return getOffline<AuditLogEntry[]>('audit_logs', defaultAuditLogs);
+  },
 
-  approveAction: (id: number) => {
+  approveAction: async (id: number) => {
     const url = hasRealToken()
       ? `${API_BASE}/ops/actions/${id}/approve`
       : `${API_BASE}/demo/ops/actions/${id}/approve`;
-    return postJson<OpsAction, null>(url, {}, null, hasRealToken());
+    const res = await postJson<OpsAction, null>(url, {}, null, hasRealToken());
+
+    const list = getOffline<OpsAction[]>('actions', defaultActions);
+    const updated = list.map((a) =>
+      a.id === id ? { ...a, status: 'approved' as const } : a
+    );
+    cacheOffline('actions', updated);
+
+    const user = auth.getUser();
+    const logs = getOffline<AuditLogEntry[]>('audit_logs', defaultAuditLogs);
+    const newLog: AuditLogEntry = {
+      id: Date.now(),
+      user_id: user?.id || 1,
+      username: user?.username || 'organizer',
+      action_type: 'ops_action_approved',
+      target_id: String(id),
+      details: { title: list.find((a) => a.id === id)?.title || 'Action' },
+      timestamp: new Date().toISOString(),
+    };
+    cacheOffline('audit_logs', [newLog, ...logs]);
+
+    return res;
   },
 
-  rejectAction: (id: number, reason: string) => {
+  rejectAction: async (id: number, reason: string) => {
     const url = hasRealToken()
       ? `${API_BASE}/ops/actions/${id}/reject`
       : `${API_BASE}/demo/ops/actions/${id}/reject`;
-    return postJson<OpsAction, null>(url, { reason }, null, hasRealToken());
+    const res = await postJson<OpsAction, null>(
+      url,
+      { reason },
+      null,
+      hasRealToken()
+    );
+
+    const list = getOffline<OpsAction[]>('actions', defaultActions);
+    const updated = list.map((a) =>
+      a.id === id ? { ...a, status: 'rejected' as const } : a
+    );
+    cacheOffline('actions', updated);
+
+    const user = auth.getUser();
+    const logs = getOffline<AuditLogEntry[]>('audit_logs', defaultAuditLogs);
+    const newLog: AuditLogEntry = {
+      id: Date.now(),
+      user_id: user?.id || 1,
+      username: user?.username || 'organizer',
+      action_type: 'ops_action_rejected',
+      target_id: String(id),
+      details: {
+        title: list.find((a) => a.id === id)?.title || 'Action',
+        reason,
+      },
+      timestamp: new Date().toISOString(),
+    };
+    cacheOffline('audit_logs', [newLog, ...logs]);
+
+    return res;
   },
 };
