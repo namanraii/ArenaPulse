@@ -88,6 +88,18 @@ export function LoginPage() {
           <User size={14} /> Demo: organizer / volunteer / fan — password:
           password
         </p>
+
+        <div className="login-back-link">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+          >
+            ← Back to Fan Guide
+          </a>
+        </div>
       </form>
     </div>
   );

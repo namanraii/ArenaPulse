@@ -90,6 +90,9 @@ export function FanApp() {
               Offline cached data
             </span>
           )}
+          <a href="/ops" className="btn-staff-mode">
+            <ShieldCheck size={16} /> Staff Dashboard
+          </a>
         </div>
       </header>
 

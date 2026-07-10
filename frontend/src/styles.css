@@ -1139,3 +1139,38 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== Staff switcher utilities ===== */
+.btn-staff-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-staff-mode:hover {
+  background: var(--border);
+  color: var(--bg);
+}
+
+.login-back-link {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+.login-back-link a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.login-back-link a:hover {
+  text-decoration: underline;
+}

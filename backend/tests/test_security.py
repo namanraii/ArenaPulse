@@ -1,4 +1,3 @@
-
 from app.utils.security import sanitize_input
 
 

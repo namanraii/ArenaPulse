@@ -180,6 +180,9 @@ export function OpsDashboard() {
                 </button>
               ))}
           </nav>
+          <button className="btn-ghost" onClick={() => navigate('/')}>
+            <Users size={16} /> Fan Guide
+          </button>
           <button className="btn-ghost" onClick={logout}>
             <LogOut size={16} /> Exit
           </button>

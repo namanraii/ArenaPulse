@@ -163,7 +163,9 @@ class CrowdSentinelAgent(BaseAgent):
         if severity == CrowdAlertSeverity.CRITICAL:
             return f"Open overflow exits for {z.zone}. Deploy stewards to redirect flow to adjacent lower-density zones."
         if severity == CrowdAlertSeverity.HIGH:
-            return "Prepare overflow routing. Announce nearby less-crowded exit via PA/digital boards."
+            return (
+                "Prepare overflow routing. Announce nearby less-crowded exit via PA/digital boards."
+            )
         return f"Monitor {z.zone} closely. Increase concourse patrol frequency."
 
     async def _generate_summary(self, alert: CrowdAlert) -> str:
