@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import math
 import random
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import structlog
 
@@ -46,6 +45,7 @@ class CrowdSimulator:
         self._densities: dict[str, float] = {z: 0.45 + (i * 0.02) for i, z in enumerate(self.zones)}
         self._history: dict[str, list[float]] = {z: [] for z in self.zones}
         self._on_tick_callbacks: list = []
+        self._density_timeline: list[dict] = []
         self._transit_split: dict[str, float] = {
             TransitMode.METRO.value: 0.35,
             TransitMode.BUS.value: 0.20,
@@ -54,8 +54,14 @@ class CrowdSimulator:
             TransitMode.SHUTTLE.value: 0.05,
         }
         self._waste_bins: dict[str, float] = {
-            "Bin_A1": 0.2, "Bin_A2": 0.3, "Bin_B1": 0.15, "Bin_B2": 0.4,
-            "Bin_C1": 0.25, "Bin_C2": 0.1, "Bin_D1": 0.35, "Bin_D2": 0.2,
+            "Bin_A1": 0.2,
+            "Bin_A2": 0.3,
+            "Bin_B1": 0.15,
+            "Bin_B2": 0.4,
+            "Bin_C1": 0.25,
+            "Bin_C2": 0.1,
+            "Bin_D1": 0.35,
+            "Bin_D2": 0.2,
         }
         self._water_refills = 0
         self.schedule: MatchSchedule | None = None
@@ -143,6 +149,16 @@ class CrowdSimulator:
 
         self._water_refills += random.randint(0, 5)
 
+        avg_density = sum(self._densities.values()) / len(self._densities)
+        self._density_timeline.append(
+            {
+                "time": datetime.now(timezone.utc).strftime("%H:%M"),
+                "density": round(avg_density * 100),
+            }
+        )
+        if len(self._density_timeline) > 60:
+            self._density_timeline.pop(0)
+
     def _match_phase(self, now: datetime) -> tuple[str, float]:
         """Determine the current match phase based on the schedule.
 
@@ -153,6 +169,8 @@ class CrowdSimulator:
             tuple[str, float]: The match phase string and a base factor.
         """
         s = self.schedule
+        if s is None:
+            return "pre_match", 0.3
         if now < s.match_start:
             return "pre_match", 0.3
         if now < s.halftime_start:
@@ -193,8 +211,14 @@ class CrowdSimulator:
             list[ZoneDensity]: A list of ZoneDensity objects representing the current state.
         """
         capacities = {
-            "Zone_1": 12000, "Zone_2": 11500, "Zone_3": 11800, "Zone_4": 12200,
-            "Zone_5": 11000, "Zone_6": 11300, "Zone_7": 11600, "Zone_8": 11567,
+            "Zone_1": 12000,
+            "Zone_2": 11500,
+            "Zone_3": 11800,
+            "Zone_4": 12200,
+            "Zone_5": 11000,
+            "Zone_6": 11300,
+            "Zone_7": 11600,
+            "Zone_8": 11567,
         }
         result = []
         for zone in self.zones:
@@ -244,6 +268,10 @@ class CrowdSimulator:
             dict[str, float]: A dictionary mapping bin IDs to their fill levels (0.0 to 1.0).
         """
         return dict(self._waste_bins)
+
+    def get_density_timeline(self) -> list[dict]:
+        """Return rolling average stadium density samples for charting."""
+        return list(self._density_timeline)
 
     def get_water_refills(self) -> int:
         """Get the cumulative count of water bottle refills.

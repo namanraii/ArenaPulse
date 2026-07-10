@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 import asyncio
 
-from app.agents.concierge import ConciergeAgent
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+
 from app.models import ChatRequest, ChatResponse
 from app.utils.security import chat_limiter
 
@@ -27,10 +27,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
     if not allowed:
         raise HTTPException(status_code=429, detail="Chat rate limit exceeded")
 
-    from app.main import concierge_agent
-    if not concierge_agent:
+    from app import dependencies as deps
+
+    if not deps.concierge_agent:
         raise HTTPException(status_code=503, detail="Concierge not ready")
-    return await concierge_agent.chat(request)
+    return await deps.concierge_agent.chat(request)
 
 
 @router.post("/chat/stream")
@@ -47,11 +48,12 @@ async def chat_stream(request: ChatRequest):
     if not allowed:
         raise HTTPException(status_code=429, detail="Chat rate limit exceeded")
 
-    from app.main import concierge_agent
-    if not concierge_agent:
+    from app import dependencies as deps
+
+    if not deps.concierge_agent:
         raise HTTPException(status_code=503, detail="Concierge not ready")
 
-    response = await concierge_agent.chat(request)
+    response = await deps.concierge_agent.chat(request)
 
     async def event_generator():
         words = response.response.split()

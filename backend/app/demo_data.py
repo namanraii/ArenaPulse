@@ -20,7 +20,6 @@ from app.models import (
     PathNode,
 )
 
-
 STADIUM_ZONES: list[dict] = [
     {"name": "Zone_1", "label": "North Plaza", "capacity": 8200, "density": 0.62},
     {"name": "Zone_2", "label": "East Concourse", "capacity": 7600, "density": 0.88},
@@ -40,14 +39,18 @@ def demo_navigation(request: NavigationRequest) -> NavigationResponse:
     wants_transit = any(word in destination for word in ("transit", "metro", "bus", "transport"))
 
     if wants_restroom:
-        end = PathNode(name="Accessible_Restroom_E2", type="RestRoom", distance_m=35, estimated_time_s=45)
+        end = PathNode(
+            name="Accessible_Restroom_E2", type="RestRoom", distance_m=35, estimated_time_s=45
+        )
         explanation = {
             "en": "Use the east concourse ramp, then turn left at Section 212. This step-free route avoids the crowded West Gate queue and reaches the accessible restroom in about 4 minutes.",
             "es": "Usa la rampa del pasillo este y gira a la izquierda en la Seccion 212. Esta ruta sin escalones evita la fila congestionada de West Gate y llega al bano accesible en unos 4 minutos.",
             "fr": "Prenez la rampe du hall est, puis tournez a gauche a la section 212. Cet itineraire sans marche evite la file dense de West Gate et rejoint les toilettes accessibles en environ 4 minutes.",
         }
     elif wants_transit:
-        end = PathNode(name="Trinity_Rail_Shuttle", type="TransitStop", distance_m=70, estimated_time_s=90)
+        end = PathNode(
+            name="Trinity_Rail_Shuttle", type="TransitStop", distance_m=70, estimated_time_s=90
+        )
         explanation = {
             "en": "Head through the South Ramp toward Gate D, then follow signs to the Trinity Rail shuttle. It is currently less crowded than rideshare pickup and keeps you on a step-free path.",
             "es": "Ve por la rampa sur hacia Gate D y sigue las senales al shuttle Trinity Rail. Ahora esta menos lleno que la zona de rideshare y mantiene una ruta sin escalones.",
@@ -110,7 +113,9 @@ def demo_chat(message: str, language: str = "en") -> ChatResponse:
 
     return ChatResponse(
         response=text.get(language, text["en"]),
-        sources=[{"type": "demo_knowledge_graph", "venue": "AT&T Stadium", "confidence": "grounded"}],
+        sources=[
+            {"type": "demo_knowledge_graph", "venue": "AT&T Stadium", "confidence": "grounded"}
+        ],
         detected_intent=intent,
         language=language,
     )

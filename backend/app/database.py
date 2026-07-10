@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import asyncpg
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import asyncpg
+
 from app.config import settings
 from app.models import (
-    CrowdAlert,
-    CrowdAlertSeverity,
     OpsAction,
     OpsActionPriority,
     OpsActionStatus,

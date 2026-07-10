@@ -5,9 +5,9 @@ from __future__ import annotations
 import structlog
 
 from app.agents.base import BaseAgent
+from app.graph.neo4j_client import Neo4jClient
 from app.models import SustainabilitySummary, TransitMode
 from app.utils.llm_router import LLMRouter
-from app.graph.neo4j_client import Neo4jClient
 
 logger = structlog.get_logger()
 
@@ -39,7 +39,9 @@ class SustainabilityAgent(BaseAgent):
         self._waste_bins: dict[str, float] = {}
         self._water_refills = 0
 
-    def update_from_simulator(self, transit: dict[str, float], waste: dict[str, float], water: int) -> None:
+    def update_from_simulator(
+        self, transit: dict[str, float], waste: dict[str, float], water: int
+    ) -> None:
         """Sync sustainability KPIs from the live crowd simulator."""
         self._transit_split = dict(transit)
         self._waste_bins = dict(waste)
@@ -71,8 +73,10 @@ class SustainabilityAgent(BaseAgent):
         # Generate eco-tips via LLM
         tips = await self._generate_tips(split, total_co2)
 
+        transit_split_enum = {TransitMode(k): v for k, v in split.items()}
+
         return SustainabilitySummary(
-            transit_split=split,
+            transit_split=transit_split_enum,
             estimated_co2_kg=round(total_co2, 2),
             sustainability_score=score,
             eco_tips=tips,
@@ -131,10 +135,12 @@ Write a short, punchy eco-nudge (1 sentence) encouraging fans to take the greene
             int: A score from 0 to 100.
         """
         # Higher score for greener transit + lower waste
-        green_ratio = split.get(TransitMode.METRO.value, 0) + \
-                      split.get(TransitMode.BUS.value, 0) + \
-                      split.get(TransitMode.WALK.value, 0) + \
-                      split.get(TransitMode.SHUTTLE.value, 0)
+        green_ratio = (
+            split.get(TransitMode.METRO.value, 0)
+            + split.get(TransitMode.BUS.value, 0)
+            + split.get(TransitMode.WALK.value, 0)
+            + split.get(TransitMode.SHUTTLE.value, 0)
+        )
         avg_waste = sum(waste.values()) / len(waste) if waste else 0.5
         raw = (green_ratio * 100) - (avg_waste * 30)
         return max(0, min(100, int(raw)))
@@ -154,4 +160,8 @@ Estimated CO2 per 1000 fans: {co2:.2f} kg.
 Generate 3 short, actionable sustainability tips for stadium fans. One sentence each."""
         raw = await self.llm.call_cached("sustain_tips", prompt, model="flash", ttl_seconds=300)
         tips = [t.strip("-• ") for t in raw.split("\n") if t.strip()]
-        return tips[:3] or ["Consider public transit to reduce emissions.", "Use refillable water bottles.", "Recycle at designated bins."]
+        return tips[:3] or [
+            "Consider public transit to reduce emissions.",
+            "Use refillable water bottles.",
+            "Recycle at designated bins.",
+        ]

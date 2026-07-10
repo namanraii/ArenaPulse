@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic,
   MicOff,
@@ -7,75 +7,124 @@ import {
   Send,
   MessageSquare,
   X,
-  Globe,
   Sparkles,
-} from 'lucide-react'
-import { useSpeech } from '../hooks/useSpeech'
-import { api } from '../services/api'
-import { LANGUAGES } from '../utils/constants'
-import type { ChatResult } from '../types'
+} from 'lucide-react';
+import { useSpeech } from '../hooks/useSpeech';
+import { api } from '../services/api';
+import { LANGUAGES } from '../utils/constants';
+import type { ChatResult } from '../types';
 
-export function ChatWidget({ language }: { language: string }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; sources?: unknown[] }>>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [chatLang, setChatLang] = useState(language)
-  const [voiceOut, setVoiceOut] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const fabRef = useRef<HTMLButtonElement>(null)
+interface ChatWidgetProps {
+  language: string;
+  voiceEnabled?: boolean;
+}
+
+export function ChatWidget({
+  language,
+  voiceEnabled = false,
+}: ChatWidgetProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; text: string; sources?: unknown[] }>
+  >([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [chatLang, setChatLang] = useState(language);
+  const [voiceOut, setVoiceOut] = useState(voiceEnabled);
+  const [error, setError] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVoiceOut(voiceEnabled);
+  }, [voiceEnabled]);
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50)
+      setTimeout(() => inputRef.current?.focus(), 50);
     } else {
-      fabRef.current?.focus()
+      fabRef.current?.focus();
     }
-  }, [isOpen])
-
-  const speech = useSpeech(chatLang)
+  }, [isOpen]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (!isOpen) return;
+    const handleFocusTrap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, textarea, select, [href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleFocusTrap);
+    return () => document.removeEventListener('keydown', handleFocusTrap);
+  }, [isOpen]);
+
+  const speech = useSpeech(chatLang);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     if (speech.transcript && speech.isListening === false) {
-      setInput(speech.transcript)
+      setInput(speech.transcript);
     }
-  }, [speech.transcript, speech.isListening])
+  }, [speech.transcript, speech.isListening]);
 
   const send = useCallback(async () => {
-    const text = input.trim()
-    if (!text) return
-    setInput('')
-    setError(null)
-    setMessages((m) => [...m, { role: 'user', text }])
-    setLoading(true)
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    setError(null);
+    setMessages((m) => [...m, { role: 'user', text }]);
+    setLoading(true);
     try {
-      const result: ChatResult = await api.chat(text, chatLang)
-      setMessages((m) => [...m, { role: 'assistant', text: result.response, sources: result.sources }])
+      const result: ChatResult = await api.chat(text, chatLang);
+      setMessages((m) => [
+        ...m,
+        { role: 'assistant', text: result.response, sources: result.sources },
+      ]);
       if (voiceOut) {
-        speech.speak(result.response)
+        speech.speak(result.response);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to send message')
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to send message';
+      setError(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [input, chatLang, voiceOut, speech])
+  }, [input, chatLang, voiceOut, speech]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      send()
+      e.preventDefault();
+      send();
     }
     if (e.key === 'Escape') {
-      setIsOpen(false)
+      setIsOpen(false);
     }
-  }
+  };
+
+  const toggleMic = () => {
+    if (speech.isListening) {
+      speech.stopListening();
+    } else {
+      speech.startListening();
+    }
+  };
 
   return (
     <>
@@ -90,11 +139,18 @@ export function ChatWidget({ language }: { language: string }) {
         </button>
       )}
       {isOpen && (
-        <div className="chat-panel" role="dialog" aria-modal="true" aria-label="Concierge chat">
+        <div
+          ref={dialogRef}
+          className="chat-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="chat-title"
+          aria-describedby="chat-desc"
+        >
           <div className="chat-header">
             <div>
-              <strong>ArenaPulse Concierge</strong>
-              <span className="chat-status">
+              <strong id="chat-title">ArenaPulse Concierge</strong>
+              <span id="chat-desc" className="chat-status">
                 {speech.supported ? 'Voice enabled' : 'Text only'}
               </span>
             </div>
@@ -113,7 +169,9 @@ export function ChatWidget({ language }: { language: string }) {
               <button
                 className={voiceOut ? 'active' : ''}
                 onClick={() => setVoiceOut((v) => !v)}
-                aria-label={voiceOut ? 'Disable voice output' : 'Enable voice output'}
+                aria-label={
+                  voiceOut ? 'Disable voice output' : 'Enable voice output'
+                }
                 title="Voice output"
               >
                 {voiceOut ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -123,7 +181,12 @@ export function ChatWidget({ language }: { language: string }) {
               </button>
             </div>
           </div>
-          <div className="chat-messages" role="log" aria-live="polite" aria-atomic="false">
+          <div
+            className="chat-messages"
+            role="log"
+            aria-live="polite"
+            aria-atomic="false"
+          >
             {messages.length === 0 && (
               <div className="chat-empty">
                 <Sparkles size={32} />
@@ -158,7 +221,18 @@ export function ChatWidget({ language }: { language: string }) {
                 onMouseUp={speech.stopListening}
                 onTouchStart={speech.startListening}
                 onTouchEnd={speech.stopListening}
-                aria-label={speech.isListening ? 'Listening...' : 'Hold to speak'}
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    toggleMic();
+                  }
+                }}
+                aria-label={
+                  speech.isListening
+                    ? 'Listening... release to stop'
+                    : 'Press to speak'
+                }
+                aria-pressed={speech.isListening}
               >
                 {speech.isListening ? <MicOff size={20} /> : <Mic size={20} />}
               </button>
@@ -179,5 +253,5 @@ export function ChatWidget({ language }: { language: string }) {
         </div>
       )}
     </>
-  )
+  );
 }

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+
 import structlog
 
-from app.config import settings
-from app.graph.neo4j_client import init_driver, close_driver, get_driver
-from app.graph.neo4j_client import init_driver, close_driver, get_driver
+from app.graph.neo4j_client import close_driver, get_driver, init_driver
 
 logger = structlog.get_logger()
+
 
 async def seed_stadium() -> None:
     await init_driver()
@@ -101,10 +101,14 @@ async def seed_stadium() -> None:
 
     # Restrooms
     restrooms = [
-        ("RR_1A", True), ("RR_1B", False),
-        ("RR_2A", True), ("RR_2B", False),
-        ("RR_3A", True), ("RR_3B", False),
-        ("RR_4A", True), ("RR_4B", False),
+        ("RR_1A", True),
+        ("RR_1B", False),
+        ("RR_2A", True),
+        ("RR_2B", False),
+        ("RR_3A", True),
+        ("RR_3B", False),
+        ("RR_4A", True),
+        ("RR_4B", False),
     ]
     for name, accessible in restrooms:
         await driver.execute_query(
@@ -115,16 +119,20 @@ async def seed_stadium() -> None:
 
     # Gate -> Zone
     gate_zone = [
-        ("Gate_A", "Zone_1"), ("Gate_A", "Zone_2"),
-        ("Gate_B", "Zone_3"), ("Gate_B", "Zone_4"),
-        ("Gate_C", "Zone_5"), ("Gate_C", "Zone_6"),
-        ("Gate_D", "Zone_7"), ("Gate_D", "Zone_8"),
+        ("Gate_A", "Zone_1"),
+        ("Gate_A", "Zone_2"),
+        ("Gate_B", "Zone_3"),
+        ("Gate_B", "Zone_4"),
+        ("Gate_C", "Zone_5"),
+        ("Gate_C", "Zone_6"),
+        ("Gate_D", "Zone_7"),
+        ("Gate_D", "Zone_8"),
     ]
-    for g, z in gate_zone:
+    for gate_name, zone_name in gate_zone:
         await driver.execute_query(
             "MATCH (gate:Gate {name: $g}), (zone:Zone {name: $z}) CREATE (gate)-[:LEADS_TO]->(zone)",
-            g=g,
-            z=z,
+            g=gate_name,
+            z=zone_name,
         )
 
     # Zone CONNECTS_TO (bidirectional concourse connections)
@@ -158,30 +166,38 @@ async def seed_stadium() -> None:
 
     # Zone -> Nearest Exit
     zone_exit = [
-        ("Zone_1", "Exit_North"), ("Zone_2", "Exit_North"),
-        ("Zone_3", "Exit_East"), ("Zone_4", "Exit_East"),
-        ("Zone_5", "Exit_South"), ("Zone_6", "Exit_South"),
-        ("Zone_7", "Exit_West"), ("Zone_8", "Exit_West"),
+        ("Zone_1", "Exit_North"),
+        ("Zone_2", "Exit_North"),
+        ("Zone_3", "Exit_East"),
+        ("Zone_4", "Exit_East"),
+        ("Zone_5", "Exit_South"),
+        ("Zone_6", "Exit_South"),
+        ("Zone_7", "Exit_West"),
+        ("Zone_8", "Exit_West"),
     ]
-    for z, e in zone_exit:
+    for zone_name, exit_name in zone_exit:
         await driver.execute_query(
             "MATCH (zone:Zone {name: $z}), (exit:Exit {name: $e}) CREATE (zone)-[:NEAREST_EXIT]->(exit)",
-            z=z,
-            e=e,
+            z=zone_name,
+            e=exit_name,
         )
 
     # Zone -> Nearest Medical
     zone_med = [
-        ("Zone_1", "Medical_North"), ("Zone_2", "Medical_North"),
-        ("Zone_3", "Medical_North"), ("Zone_4", "Medical_North"),
-        ("Zone_5", "Medical_South"), ("Zone_6", "Medical_South"),
-        ("Zone_7", "Medical_South"), ("Zone_8", "Medical_South"),
+        ("Zone_1", "Medical_North"),
+        ("Zone_2", "Medical_North"),
+        ("Zone_3", "Medical_North"),
+        ("Zone_4", "Medical_North"),
+        ("Zone_5", "Medical_South"),
+        ("Zone_6", "Medical_South"),
+        ("Zone_7", "Medical_South"),
+        ("Zone_8", "Medical_South"),
     ]
-    for z, m in zone_med:
+    for zone_name, med_name in zone_med:
         await driver.execute_query(
             "MATCH (zone:Zone {name: $z}), (med:MedicalPoint {name: $m}) CREATE (zone)-[:NEAREST_MEDICAL]->(med)",
-            z=z,
-            m=m,
+            z=zone_name,
+            m=med_name,
         )
 
     # Gate -> Nearest Transit
@@ -191,28 +207,34 @@ async def seed_stadium() -> None:
         ("Gate_C", "Rideshare_Zone_A"),
         ("Gate_D", "Pedestrian_Walk"),
     ]
-    for g, t in gate_transit:
+    for gate_name, transit_name in gate_transit:
         await driver.execute_query(
             "MATCH (gate:Gate {name: $g}), (tr:TransitStop {name: $t}) CREATE (gate)-[:NEAREST_TRANSIT]->(tr)",
-            g=g,
-            t=t,
+            g=gate_name,
+            t=transit_name,
         )
 
     # Zone -> Nearest Restroom (alternating)
     zone_rr = [
-        ("Zone_1", "RR_1A"), ("Zone_2", "RR_1B"),
-        ("Zone_3", "RR_2A"), ("Zone_4", "RR_2B"),
-        ("Zone_5", "RR_3A"), ("Zone_6", "RR_3B"),
-        ("Zone_7", "RR_4A"), ("Zone_8", "RR_4B"),
+        ("Zone_1", "RR_1A"),
+        ("Zone_2", "RR_1B"),
+        ("Zone_3", "RR_2A"),
+        ("Zone_4", "RR_2B"),
+        ("Zone_5", "RR_3A"),
+        ("Zone_6", "RR_3B"),
+        ("Zone_7", "RR_4A"),
+        ("Zone_8", "RR_4B"),
     ]
-    for z, r in zone_rr:
+    for zone_name, rr_name in zone_rr:
         await driver.execute_query(
             "MATCH (zone:Zone {name: $z}), (rr:RestRoom {name: $r}) CREATE (zone)-[:NEAREST_RESTROOM]->(rr)",
-            z=z,
-            r=r,
+            z=zone_name,
+            r=rr_name,
         )
 
-    logger.info("✅ AT&T Stadium seeded successfully with 8 zones, 4 gates, 16 sections, 4 exits, 2 medical points, 4 transit stops.")
+    logger.info(
+        "✅ AT&T Stadium seeded successfully with 8 zones, 4 gates, 16 sections, 4 exits, 2 medical points, 4 transit stops."
+    )
     await close_driver()
 
 

@@ -10,7 +10,13 @@ describe('AccessibilityToolbar', () => {
       reducedMotion: false,
       voiceEnabled: false,
     };
-    const { getByLabelText } = render(<AccessibilityToolbar settings={settings} onToggle={() => {}} offline={false} />);
+    const { getByLabelText } = render(
+      <AccessibilityToolbar
+        settings={settings}
+        onToggle={() => {}}
+        offline={false}
+      />
+    );
     expect(getByLabelText(/High Contrast/i)).toBeInTheDocument();
   });
 });

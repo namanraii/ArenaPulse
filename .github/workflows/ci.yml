@@ -21,12 +21,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install black isort
+      - name: Format check (black)
+        run: black --check app --line-length=100
+      - name: Import order check (isort)
+        run: isort --check-only app --profile=black --line-length=100
       - name: Lint with flake8
-        run: flake8 app --max-line-length=100 --extend-ignore=E203,W503
+        run: flake8 app --max-line-length=120 --extend-ignore=E203,W503,E501
       - name: Type check with mypy
         run: mypy app --ignore-missing-imports
-      - name: Test with pytest
-        run: pytest --cov=app --cov-report=xml
+      - name: Test with pytest (coverage gate 65%)
+        run: pytest --cov=app --cov-report=xml --cov-fail-under=65
       - name: Security audit
         run: pip install pip-audit && pip-audit --requirement requirements.txt
 
@@ -42,6 +47,10 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm ci
+      - name: Security audit
+        run: npm audit --audit-level=high
+      - name: Format check (Prettier)
+        run: npx prettier --check "src/**/*.{ts,tsx,css}"
       - name: Lint
         run: npm run lint
       - name: Test

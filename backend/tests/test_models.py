@@ -1,14 +1,10 @@
-import pytest
-from pydantic import ValidationError
 from datetime import datetime, timezone
 
-from app.models import (
-    OpsAction,
-    OpsActionPriority,
-    OpsActionStatus,
-    ChatRequest,
-    NavigationRequest
-)
+import pytest
+from pydantic import ValidationError
+
+from app.models import ChatRequest, NavigationRequest, OpsAction, OpsActionPriority, OpsActionStatus
+
 
 def test_ops_action_validation():
     action = OpsAction(
@@ -21,12 +17,12 @@ def test_ops_action_validation():
         recommended_by="Tester",
         created_at=datetime.now(timezone.utc),
         affected_zones=["Zone_1"],
-        affected_population=100
+        affected_population=100,
     )
-    
+
     assert action.title == "Test Action"
     assert action.priority == OpsActionPriority.HIGH
-    
+
     # Missing required field
     with pytest.raises(ValidationError):
         OpsAction(
@@ -35,10 +31,12 @@ def test_ops_action_validation():
             # missing reasoning, priority, etc
         )
 
+
 def test_chat_request_validation():
     req = ChatRequest(message="Hello", language="fr")
     assert req.message == "Hello"
     assert req.language == "fr"
+
 
 def test_navigation_request_validation():
     req = NavigationRequest(start_location="Zone_1", destination_intent="Gate A", step_free=True)

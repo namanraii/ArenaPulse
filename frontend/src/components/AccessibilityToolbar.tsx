@@ -1,24 +1,22 @@
-import React from 'react'
-import {
-  Accessibility,
-  Contrast,
-  Type,
-  Volume2,
-  WifiOff,
-} from 'lucide-react'
+import React from 'react';
+import { Accessibility, Contrast, Type, Volume2, WifiOff } from 'lucide-react';
 
 interface AccessibilityToolbarProps {
   settings: {
-    highContrast: boolean
-    largeText: boolean
-    reducedMotion: boolean
-    voiceEnabled: boolean
-  }
-  onToggle: (key: string) => void
-  offline?: boolean
+    highContrast: boolean;
+    largeText: boolean;
+    reducedMotion: boolean;
+    voiceEnabled: boolean;
+  };
+  onToggle: (key: string) => void;
+  offline?: boolean;
 }
 
-export function AccessibilityToolbar({ settings, onToggle, offline }: AccessibilityToolbarProps) {
+export function AccessibilityToolbar({
+  settings,
+  onToggle,
+  offline,
+}: AccessibilityToolbarProps) {
   return (
     <aside className="a11y-bar" aria-label="Accessibility settings">
       {offline && (
@@ -66,5 +64,5 @@ export function AccessibilityToolbar({ settings, onToggle, offline }: Accessibil
         <Accessibility size={16} /> Accessibility
       </span>
     </aside>
-  )
+  );
 }

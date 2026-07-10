@@ -9,7 +9,9 @@ from app.constants import LANGUAGE_NAMES
 from app.graph.neo4j_client import Neo4jClient
 from app.models import NavigationRequest, NavigationResponse, PathNode
 from app.utils.llm_router import LLMRouter
+
 logger = structlog.get_logger()
+
 
 class NavigatorAgent(BaseAgent):
     """Routes fans through the stadium using graph pathfinding + LLM explanations."""
@@ -89,12 +91,15 @@ class NavigatorAgent(BaseAgent):
             path_nodes, request.language, request.step_free, avoid
         )
 
-        await self.log_action("navigation", {
-            "from": request.start_location,
-            "to": request.destination_intent,
-            "language": request.language,
-            "step_free": request.step_free,
-        })
+        await self.log_action(
+            "navigation",
+            {
+                "from": request.start_location,
+                "to": request.destination_intent,
+                "language": request.language,
+                "step_free": request.step_free,
+            },
+        )
 
         return NavigationResponse(
             path=path_nodes,
@@ -148,7 +153,9 @@ class NavigatorAgent(BaseAgent):
             return intent_lower.replace("zone_", "Zone_"), "Zone", intent_lower
         # Default: assume it's a zone or gate name
         if intent_lower.startswith("section_"):
-            zone = await self.neo4j.find_zone_for_section(intent_lower.replace("section_", "Section_"))
+            zone = await self.neo4j.find_zone_for_section(
+                intent_lower.replace("section_", "Section_")
+            )
             return zone or start_zone, "Zone", intent_lower
         return start_zone, "Zone", intent_lower
 

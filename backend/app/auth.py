@@ -8,11 +8,11 @@ from typing import Annotated
 import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
 from app.database import get_user_by_id, get_user_by_username
-from app.models import TokenData, User, UserRole
+from app.models import User, UserRole
 
 security = HTTPBearer(auto_error=False)
 
@@ -85,10 +85,9 @@ async def authenticate_user(username: str, password: str) -> User | None:
         return None
     # Fetch the hashed password from DB
     from app.database import get_db
+
     async with get_db() as conn:
-        row = await conn.fetchrow(
-            "SELECT hashed_password FROM users WHERE username = $1", username
-        )
+        row = await conn.fetchrow("SELECT hashed_password FROM users WHERE username = $1", username)
         if not row:
             return None
         stored_hash = row["hashed_password"]

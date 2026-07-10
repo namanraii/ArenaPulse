@@ -9,9 +9,9 @@ import structlog
 
 from app.agents.base import BaseAgent
 from app.database import create_ops_action
+from app.graph.neo4j_client import Neo4jClient
 from app.models import CrowdAlert, CrowdAlertSeverity, OpsActionPriority, ZoneDensity
 from app.utils.llm_router import LLMRouter
-from app.graph.neo4j_client import Neo4jClient
 
 logger = structlog.get_logger()
 
@@ -31,6 +31,11 @@ class CrowdSentinelAgent(BaseAgent):
         super().__init__(llm_router, neo4j)
         self._history: dict[str, list[float]] = {}
         self._last_alert_time: dict[str, float] = {}
+        self._active_alerts: list[CrowdAlert] = []
+
+    def get_active_alerts(self) -> list[CrowdAlert]:
+        """Return the most recent crowd alerts (newest first)."""
+        return list(reversed(self._active_alerts[-50:]))
 
     async def process(self, input_data: list[ZoneDensity]) -> list[CrowdAlert]:
         """Process a batch of zone densities (implements BaseAgent)."""
@@ -69,7 +74,11 @@ class CrowdSentinelAgent(BaseAgent):
                     title=f"Crowd Alert: {alert.zone}",
                     description=alert.message,
                     reasoning=alert.suggested_mitigation,
-                    priority=OpsActionPriority.CRITICAL if alert.severity == CrowdAlertSeverity.CRITICAL else OpsActionPriority.HIGH,
+                    priority=(
+                        OpsActionPriority.CRITICAL
+                        if alert.severity == CrowdAlertSeverity.CRITICAL
+                        else OpsActionPriority.HIGH
+                    ),
                     recommended_by="CrowdSentinelAgent",
                     affected_zones=[alert.zone],
                     affected_population=alert.affected_population,
@@ -77,6 +86,9 @@ class CrowdSentinelAgent(BaseAgent):
                 )
 
         if alerts:
+            self._active_alerts.extend(alerts)
+            if len(self._active_alerts) > 100:
+                self._active_alerts = self._active_alerts[-100:]
             await self.log_action("crowd_alert_batch", {"count": len(alerts)})
         return alerts
 
@@ -151,7 +163,7 @@ class CrowdSentinelAgent(BaseAgent):
         if severity == CrowdAlertSeverity.CRITICAL:
             return f"Open overflow exits for {z.zone}. Deploy stewards to redirect flow to adjacent lower-density zones."
         if severity == CrowdAlertSeverity.HIGH:
-            return f"Prepare overflow routing. Announce nearby less-crowded exit via PA/digital boards."
+            return "Prepare overflow routing. Announce nearby less-crowded exit via PA/digital boards."
         return f"Monitor {z.zone} closely. Increase concourse patrol frequency."
 
     async def _generate_summary(self, alert: CrowdAlert) -> str:
@@ -170,5 +182,7 @@ Severity: {alert.severity.value}
 Predicted time to critical threshold: {alert.predicted_crossing_time_min or 'N/A'} minutes
 Suggested mitigation: {alert.suggested_mitigation}
 Write a single concise sentence summarizing the situation and the recommended action."""
-        cache_key = f"sentinel_alert:{alert.zone}:{alert.severity.value}:{alert.suggested_mitigation}"
-        return await self.llm.call_cached(cache_key, prompt, ttl_seconds=300, temperature=0.2)
+        cache_key = (
+            f"sentinel_alert:{alert.zone}:{alert.severity.value}:{alert.suggested_mitigation}"
+        )
+        return await self.llm.call_cached(cache_key, prompt, ttl_seconds=300)

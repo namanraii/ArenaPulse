@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
-import structlog
 import uuid
+
+import structlog
 
 from app.agents.base import BaseAgent
 from app.constants import LANGUAGE_NAMES
@@ -25,8 +26,6 @@ INTENT_PATTERNS = {
     "facilities": r"\b(restroom|bathroom|toilet|food|concession|water|medical|first aid|wifi|atm)\b",
     "emergency": r"\b(emergency|help|lost|stolen|injured|medical|police|security)\b",
 }
-
-
 
 
 class ConciergeAgent(BaseAgent):
@@ -121,7 +120,11 @@ Rules:
             # Extract potential zone/section names
             zones = re.findall(r"\b(Zone|Section|Gate|Exit)_[A-Z0-9]+\b", message, re.IGNORECASE)
             for z in zones:
-                z_formatted = z.replace("zone_", "Zone_").replace("section_", "Section_").replace("gate_", "Gate_")
+                z_formatted = (
+                    z.replace("zone_", "Zone_")
+                    .replace("section_", "Section_")
+                    .replace("gate_", "Gate_")
+                )
                 facts = await self.neo4j.get_stadium_facts("Zone", z_formatted)
                 if facts:
                     sources.append({"type": "zone", "name": z_formatted, "facts": facts[0]})

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,8 +23,7 @@ class Settings(BaseSettings):
         "gemini-2.0-flash-exp:generateContent"
     )
     gemini_pro_url: str = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        "gemini-1.5-pro:generateContent"
+        "https://generativelanguage.googleapis.com/v1beta/models/" "gemini-1.5-pro:generateContent"
     )
 
     # Neo4j

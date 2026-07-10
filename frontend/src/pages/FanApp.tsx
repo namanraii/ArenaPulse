@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   MapPin,
   Navigation,
@@ -10,71 +10,75 @@ import {
   Globe,
   ChevronRight,
   Footprints,
-} from 'lucide-react'
-import { AccessibilityToolbar } from '../components/AccessibilityToolbar'
-import { ChatWidget } from '../components/ChatWidget'
-import { useWebSocket } from '../hooks/useWebSocket'
-import { api } from '../services/api'
-import { LANGUAGES, getDensityClass } from '../utils/constants'
-import type { NavigationResult, SustainabilityData, Zone } from '../types'
+} from 'lucide-react';
+import { AccessibilityToolbar } from '../components/AccessibilityToolbar';
+import { ChatWidget } from '../components/ChatWidget';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { api } from '../services/api';
+import { LANGUAGES, getDensityClass } from '../utils/constants';
+import type { NavigationResult, SustainabilityData, Zone } from '../types';
 
 export function FanApp() {
-  const [lang, setLang] = useState('es')
+  const [lang, setLang] = useState('es');
   const [a11y, setA11y] = useState({
     highContrast: false,
     largeText: false,
     reducedMotion: false,
     voiceEnabled: false,
-  })
-  const [startLoc, setStartLoc] = useState('Section_214')
-  const [intent, setIntent] = useState('nearest_restroom')
-  const [stepFree, setStepFree] = useState(true)
-  const [route, setRoute] = useState<NavigationResult | null>(null)
-  const [loadingRoute, setLoadingRoute] = useState(false)
-  const [sustain, setSustain] = useState<SustainabilityData | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  });
+  const [startLoc, setStartLoc] = useState('Section_214');
+  const [intent, setIntent] = useState('nearest_restroom');
+  const [stepFree, setStepFree] = useState(true);
+  const [route, setRoute] = useState<NavigationResult | null>(null);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [sustain, setSustain] = useState<SustainabilityData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const ws = useWebSocket()
+  const ws = useWebSocket();
 
   useEffect(() => {
-    document.title = 'Fan Guide | ArenaPulse'
-    api.sustainability().then(setSustain)
-  }, [])
+    document.title = 'Fan Guide | ArenaPulse';
+    api.sustainability().then(setSustain);
+  }, []);
 
   const toggleA11y = useCallback((key: string) => {
-    setA11y((prev) => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))
-  }, [])
+    setA11y((prev) => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
+  }, []);
 
   const askRoute = useCallback(async () => {
-    setLoadingRoute(true)
-    setError(null)
+    setLoadingRoute(true);
+    setError(null);
     try {
-      const result = await api.navigate(startLoc, intent, stepFree, lang)
-      setRoute(result)
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate route')
+      const result = await api.navigate(startLoc, intent, stepFree, lang);
+      setRoute(result);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to generate route');
     } finally {
-      setLoadingRoute(false)
+      setLoadingRoute(false);
     }
-  }, [startLoc, intent, stepFree, lang])
+  }, [startLoc, intent, stepFree, lang]);
 
-
-
-  const zones: Zone[] = ws.zones.length > 0 ? ws.zones : []
+  const zones: Zone[] = ws.zones.length > 0 ? ws.zones : [];
 
   return (
     <div
       className={`fan-app ${a11y.largeText ? 'large-text' : ''} ${
         a11y.highContrast ? 'contrast' : ''
-      }`}
+      } ${a11y.reducedMotion ? 'reduced-motion' : ''}`}
     >
       <header className="fan-header">
         <div>
           <p className="eyebrow">FIFA World Cup 2026 · AT&T Stadium</p>
-          <h1>ArenaPulse <span className="text-accent">Fan Guide</span></h1>
+          <h1>
+            ArenaPulse <span className="text-accent">Fan Guide</span>
+          </h1>
         </div>
         <div className="fan-header-actions">
-          <select value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Language">
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            aria-label="Language"
+          >
             {Object.entries(LANGUAGES).map(([code, name]) => (
               <option key={code} value={code}>
                 {name}
@@ -95,7 +99,7 @@ export function FanApp() {
         offline={!ws.isConnected}
       />
 
-      <main className="fan-main">
+      <main className="fan-main" id="main-content">
         <section className="panel" aria-labelledby="nav-title">
           <div className="panel-head">
             <div>
@@ -109,7 +113,10 @@ export function FanApp() {
           <div className="fan-form">
             <label>
               <span>Your location</span>
-              <select value={startLoc} onChange={(e) => setStartLoc(e.target.value)}>
+              <select
+                value={startLoc}
+                onChange={(e) => setStartLoc(e.target.value)}
+              >
                 <option>Section_214</option>
                 <option>Section_215</option>
                 <option>Gate_A</option>
@@ -120,7 +127,10 @@ export function FanApp() {
             </label>
             <label>
               <span>Destination</span>
-              <select value={intent} onChange={(e) => setIntent(e.target.value)}>
+              <select
+                value={intent}
+                onChange={(e) => setIntent(e.target.value)}
+              >
                 <option value="nearest_restroom">Nearest restroom</option>
                 <option value="nearest_exit">Nearest exit</option>
                 <option value="transit">Transit / Metro</option>
@@ -137,7 +147,8 @@ export function FanApp() {
               Step-free route
             </label>
             <button onClick={askRoute} disabled={loadingRoute}>
-              <Route size={18} /> {loadingRoute ? 'Generating...' : 'Generate Route'}
+              <Route size={18} />{' '}
+              {loadingRoute ? 'Generating...' : 'Generate Route'}
             </button>
           </div>
           {loadingRoute && (
@@ -189,11 +200,17 @@ export function FanApp() {
               <p className="muted">Connecting to live feed...</p>
             )}
             {zones.map((z) => (
-              <div key={z.name} className={`zone-row ${getDensityClass(z.density)}`}>
+              <div
+                key={z.name}
+                className={`zone-row ${getDensityClass(z.density)}`}
+              >
                 <strong>{z.name.replace('_', ' ')}</strong>
                 <span>{Math.round(z.density * 100)}% full</span>
                 {z.density > 0.85 && (
-                  <span className="alert-badge" aria-label="High density warning">
+                  <span
+                    className="alert-badge"
+                    aria-label="High density warning"
+                  >
                     <AlertTriangle size={12} /> Congested
                   </span>
                 )}
@@ -240,7 +257,7 @@ export function FanApp() {
         </section>
       </main>
 
-      <ChatWidget language={lang} />
+      <ChatWidget language={lang} voiceEnabled={a11y.voiceEnabled} />
 
       <footer className="fan-footer">
         <p>
@@ -249,5 +266,5 @@ export function FanApp() {
         </p>
       </footer>
     </div>
-  )
+  );
 }

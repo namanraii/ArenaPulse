@@ -33,7 +33,9 @@ def test_ops_commander_scores_urgent_high_population_action_highest() -> None:
         affected_population=8000,
         time_to_impact_min=2,
     )
-    low = urgent.model_copy(update={"id": 2, "priority": OpsActionPriority.LOW, "affected_population": 500})
+    low = urgent.model_copy(
+        update={"id": 2, "priority": OpsActionPriority.LOW, "affected_population": 500}
+    )
 
     assert commander._score_action(urgent) > commander._score_action(low)
 

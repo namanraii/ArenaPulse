@@ -25,10 +25,11 @@ async def navigate(request: NavigationRequest) -> NavigationResponse:
     if not allowed:
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again shortly.")
 
-    from app.main import navigator_agent
-    if not navigator_agent:
+    from app import dependencies as deps
+
+    if not deps.navigator_agent:
         raise HTTPException(status_code=503, detail="Navigator not ready")
-    return await navigator_agent.navigate(request)
+    return await deps.navigator_agent.navigate(request)
 
 
 @router.get("/zones")
@@ -38,7 +39,8 @@ async def list_zones() -> list[dict]:
     Returns:
         list[dict]: Zone data.
     """
-    from app.main import neo4j_client
-    if not neo4j_client:
+    from app import dependencies as deps
+
+    if not deps.neo4j_client:
         raise HTTPException(status_code=503, detail="Database not ready")
-    return await neo4j_client.get_all_zones()
+    return await deps.neo4j_client.get_all_zones()

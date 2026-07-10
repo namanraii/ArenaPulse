@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import structlog
 
 from app.agents.base import BaseAgent
 from app.database import (
     add_audit_log,
-    get_all_ops_actions,
     get_pending_ops_actions,
     update_ops_action_status,
 )
-from app.models import CrowdAlert, OpsAction, OpsActionPriority, OpsActionStatus
-from app.utils.llm_router import LLMRouter
 from app.graph.neo4j_client import Neo4jClient
+from app.models import OpsAction, OpsActionPriority, OpsActionStatus
+from app.utils.llm_router import LLMRouter
 
 logger = structlog.get_logger()
 

@@ -82,7 +82,9 @@ class Neo4jClient:
                [r in relationships(path) | {distance: r.distance_m, step_free: r.step_free, time: r.avg_walk_time_s}] AS rels
         LIMIT 1
         """
-        result = await self.driver.execute_query(query, start=start_zone, end=end_zone, threshold=avoid_density_threshold)
+        result = await self.driver.execute_query(
+            query, start=start_zone, end=end_zone, threshold=avoid_density_threshold
+        )
         if result.records:
             return self._normalize_path(result.records[0]["nodes"], result.records[0]["rels"])
 
@@ -96,7 +98,9 @@ class Neo4jClient:
                [r in relationships(path) | {distance: r.distance_m, step_free: r.step_free, time: r.avg_walk_time_s}] AS rels
         LIMIT 1
         """
-        result2 = await self.driver.execute_query(query2, start=start_zone, end=end_zone, threshold=avoid_density_threshold)
+        result2 = await self.driver.execute_query(
+            query2, start=start_zone, end=end_zone, threshold=avoid_density_threshold
+        )
         if result2.records:
             return self._normalize_path(result2.records[0]["nodes"], result2.records[0]["rels"])
         return []

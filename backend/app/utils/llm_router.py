@@ -84,7 +84,9 @@ class LLMRouter:
                 return text.strip()
             return ""
         except httpx.HTTPStatusError as exc:
-            logger.error("gemini_http_error", status=exc.response.status_code, body=exc.response.text)
+            logger.error(
+                "gemini_http_error", status=exc.response.status_code, body=exc.response.text
+            )
             return "[Error: LLM service unavailable]"
         except Exception as exc:
             logger.error("gemini_exception", error=str(exc))
@@ -147,6 +149,8 @@ class LLMRouter:
                 logger.info("llm_cache_hit", key=cache_key)
                 self.metrics["cache_hits"] += 1
                 self.metrics["estimated_tokens_saved"] += 500
+                if isinstance(cached, bytes):
+                    return cached.decode("utf-8")
                 return cached
         except Exception as exc:
             logger.warning("llm_cache_unavailable", key=cache_key, error=str(exc))

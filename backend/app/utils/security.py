@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any
-
 import redis.asyncio as redis
+
 from app.config import settings
 
 _redis_client: redis.Redis | None = None
@@ -45,7 +44,9 @@ def sanitize_input(text: str, max_length: int = 2000) -> str:
     # Strip control characters except common whitespace
     text = "".join(ch for ch in text if ord(ch) >= 32 or ch in "\t\n\r")
     # Remove known injection patterns
-    text = re.sub(r"(?i)(ignore previous instructions|system prompt|you are now|DAN mode)", "", text)
+    text = re.sub(
+        r"(?i)(ignore previous instructions|system prompt|you are now|DAN mode)", "", text
+    )
     text = re.sub(r"[<>]", "", text)  # Basic XSS prevention
     return text.strip()
 

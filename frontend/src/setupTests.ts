@@ -37,7 +37,11 @@ window.speechSynthesis = {
 } as any;
 
 // Mock global fetch
-globalThis.fetch = (() => Promise.resolve({
-  ok: true,
-  json: () => Promise.resolve({}),
-})) as any;
+globalThis.fetch = (() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })) as any;
+
+// Mock scrollIntoView since JSDOM does not implement it
+window.HTMLElement.prototype.scrollIntoView = function () {};
