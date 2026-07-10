@@ -8,9 +8,20 @@ interface WsState {
   error: string | null;
 }
 
-const defaultWsUrl = import.meta.env.VITE_WS_URL
-  ? `${import.meta.env.VITE_WS_URL}/api/v1/ws/crowd-feed`
-  : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:8000/api/v1/ws/crowd-feed`;
+const getWsUrl = () => {
+  if (import.meta.env.VITE_WS_URL) {
+    return `${import.meta.env.VITE_WS_URL}/api/v1/ws/crowd-feed`;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const wsProtocol = apiUrl.startsWith('https:') ? 'wss:' : 'ws:';
+    const host = apiUrl.replace(/^https?:\/\//, '');
+    return `${wsProtocol}//${host}/api/v1/ws/crowd-feed`;
+  }
+  return `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:8000/api/v1/ws/crowd-feed`;
+};
+
+const defaultWsUrl = getWsUrl();
 
 export function useWebSocket(url: string = defaultWsUrl) {
   const [state, setState] = useState<WsState>({
